@@ -14,6 +14,7 @@ class HQ(db.Model):
     volume = db.Column(db.Integer, nullable=False)
     status = db.Column(db.String(30), nullable=False)
     nota = db.Column(db.Float)
+    imagem = db.Column(db.String(255))
 
     def to_dict(self):
         return {
@@ -24,5 +25,6 @@ class HQ(db.Model):
             "genero": self.genero,
             "volume": self.volume,
             "status": self.status,
-            "nota": self.nota
+            "nota": self.nota,
+            "imagem": self.imagem
         }

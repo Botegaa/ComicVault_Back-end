@@ -1,5 +1,4 @@
-from flask_restx import Namespace, Resource
-from flask_restx import fields
+from flask_restx import Namespace, Resource, fields
 from models import db, HQ
 
 api = Namespace("hqs", description="Operações relacionadas às HQs")
@@ -23,14 +22,12 @@ hq_model = api.model(
 class HQList(Resource):
     def get(self):
         """Lista todas as HQs"""
-
         hqs = HQ.query.all()
+        return [hq.to_dict() for hq in hqs], 200
 
-        return [hq.to_dict() for hq in hqs]
     @api.expect(hq_model)
     def post(self):
         """Cadastra uma HQ"""
-
         dados = api.payload
 
         nova_hq = HQ(
@@ -52,55 +49,79 @@ class HQList(Resource):
             "id": nova_hq.id
         }, 201
 
-    @api.route("/<int:id>")
-    class HQResource(Resource):
 
-        def get(self, id):
-            """Busca uma HQ pelo ID"""
+@api.route("/nome/<string:titulo>")
+class HQBuscaPorNome(Resource):
+    def get(self, titulo):
+        """Busca HQs pelo título"""
 
-            hq = HQ.query.get(id)
+        hqs = HQ.query.filter(HQ.titulo.ilike(f"%{titulo}%")).all()
 
-            if not hq:
-                return {"erro": "HQ não encontrada"}, 404
+        if not hqs:
+            return {"erro": "Nenhuma HQ encontrada com esse título"}, 404
 
-            return hq.to_dict(), 200
+        return [hq.to_dict() for hq in hqs], 200
 
-        @api.expect(hq_model)
-        def put(self, id):
-            """Atualiza uma HQ pelo ID"""
 
-            hq = HQ.query.get(id)
+@api.route("/status/<string:status>")
+class HQBuscaPorStatus(Resource):
+    def get(self, status):
+        """Busca HQs pelo status"""
 
-            if not hq:
-                return {"erro": "HQ não encontrada"}, 404
+        hqs = HQ.query.filter(HQ.status.ilike(f"%{status}%")).all()
 
-            dados = api.payload
+        if not hqs:
+            return {"erro": "Nenhuma HQ encontrada com esse status"}, 404
 
-            hq.titulo = dados["titulo"]
-            hq.autor = dados["autor"]
-            hq.editora = dados["editora"]
-            hq.genero = dados["genero"]
-            hq.volume = dados["volume"]
-            hq.status = dados["status"]
-            hq.nota = dados["nota"]
-            hq.imagem = dados.get("imagem")
+        return [hq.to_dict() for hq in hqs], 200
 
-            db.session.commit()
 
-            return {
-                "mensagem": "HQ atualizada com sucesso!",
-                "hq": hq.to_dict()
-            }, 200
+@api.route("/<int:id>")
+class HQResource(Resource):
 
-        def delete(self, id):
-            """Exclui uma HQ pelo ID"""
+    def get(self, id):
+        """Busca uma HQ pelo ID"""
+        hq = HQ.query.get(id)
 
-            hq = HQ.query.get(id)
+        if not hq:
+            return {"erro": "HQ não encontrada"}, 404
 
-            if not hq:
-                return {"erro": "HQ não encontrada"}, 404
+        return hq.to_dict(), 200
 
-            db.session.delete(hq)
-            db.session.commit()
+    @api.expect(hq_model)
+    def put(self, id):
+        """Atualiza uma HQ pelo ID"""
+        hq = HQ.query.get(id)
 
-            return {"mensagem": "HQ excluída com sucesso!"}, 200
+        if not hq:
+            return {"erro": "HQ não encontrada"}, 404
+
+        dados = api.payload
+
+        hq.titulo = dados["titulo"]
+        hq.autor = dados["autor"]
+        hq.editora = dados["editora"]
+        hq.genero = dados["genero"]
+        hq.volume = dados["volume"]
+        hq.status = dados["status"]
+        hq.nota = dados["nota"]
+        hq.imagem = dados.get("imagem")
+
+        db.session.commit()
+
+        return {
+            "mensagem": "HQ atualizada com sucesso!",
+            "hq": hq.to_dict()
+        }, 200
+
+    def delete(self, id):
+        """Exclui uma HQ pelo ID"""
+        hq = HQ.query.get(id)
+
+        if not hq:
+            return {"erro": "HQ não encontrada"}, 404
+
+        db.session.delete(hq)
+        db.session.commit()
+
+        return {"mensagem": "HQ excluída com sucesso!"}, 200

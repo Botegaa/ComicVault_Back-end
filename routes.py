@@ -51,3 +51,56 @@ class HQList(Resource):
             "mensagem": "HQ cadastrada com sucesso!",
             "id": nova_hq.id
         }, 201
+
+    @api.route("/<int:id>")
+    class HQResource(Resource):
+
+        def get(self, id):
+            """Busca uma HQ pelo ID"""
+
+            hq = HQ.query.get(id)
+
+            if not hq:
+                return {"erro": "HQ não encontrada"}, 404
+
+            return hq.to_dict(), 200
+
+        @api.expect(hq_model)
+        def put(self, id):
+            """Atualiza uma HQ pelo ID"""
+
+            hq = HQ.query.get(id)
+
+            if not hq:
+                return {"erro": "HQ não encontrada"}, 404
+
+            dados = api.payload
+
+            hq.titulo = dados["titulo"]
+            hq.autor = dados["autor"]
+            hq.editora = dados["editora"]
+            hq.genero = dados["genero"]
+            hq.volume = dados["volume"]
+            hq.status = dados["status"]
+            hq.nota = dados["nota"]
+            hq.imagem = dados.get("imagem")
+
+            db.session.commit()
+
+            return {
+                "mensagem": "HQ atualizada com sucesso!",
+                "hq": hq.to_dict()
+            }, 200
+
+        def delete(self, id):
+            """Exclui uma HQ pelo ID"""
+
+            hq = HQ.query.get(id)
+
+            if not hq:
+                return {"erro": "HQ não encontrada"}, 404
+
+            db.session.delete(hq)
+            db.session.commit()
+
+            return {"mensagem": "HQ excluída com sucesso!"}, 200
